@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Raises ImageMagick's default width/height resource limits (16KP) so
+  render-lib.sh can append wide sprite-sheet rows (e.g. a 128-frame ship
+  strip is 25600px wide) without hitting:
+
+    convert: width or height exceeds limit `...' @ error/cache.c/OpenPixelCache
+
+  Loaded via MAGICK_CONFIGURE_PATH instead of editing the system-wide
+  /etc/ImageMagick-6/policy.xml, so it works without root and travels with
+  the repo on any host or in the Docker image.
+-->
+<policymap>
+  <policy domain="resource" name="width" value="64KP"/>
+  <policy domain="resource" name="height" value="64KP"/>
+</policymap>

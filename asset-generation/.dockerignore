@@ -1,0 +1,20 @@
+# Build context for asset-generation/Dockerfile (invoked with RENDER_ROOT as
+# context — see scripts/render-lib.sh). Only sfx/pyproject.toml and
+# sfx/uv.lock are actually COPYed; everything else here is generated output
+# or local tooling state that doesn't need to be sent to the daemon.
+
+sfx/.venv/
+sfx/__pycache__/
+sfx/**/__pycache__/
+sfx/*.py[cod]
+
+frames/
+explosion/
+ship/
+rocks/
+rocket/
+plans/
+
+.uv_cache/
+.DS_Store
+*.swp

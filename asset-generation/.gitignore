@@ -1,0 +1,14 @@
+frames/
+__pycache__/
+.venv/
+*.py[cod]
+.DS_Store
+# project-sandbox — do not commit agent secrets
+.project-sandbox/claude/.credentials.json
+.project-sandbox/codex/auth.json
+.project-sandbox/claude/.credentials*
+.project-sandbox/claude/.claude.json
+.project-sandbox/codex/auth/
+.project-sandbox/
+.devcontainer/
+*.swp

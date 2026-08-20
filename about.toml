@@ -1,0 +1,32 @@
+# cargo-about configuration for the THIRD-PARTY-LICENSES.md bundled with
+# release archives (see .github/workflows/release.yml).
+#
+# All three shipped targets are scanned in one pass, so a single notice file
+# covers the Linux/Windows gilrs dependencies and the macOS objc ones alike.
+targets = [
+    "x86_64-unknown-linux-gnu",
+    "x86_64-pc-windows-msvc",
+    "aarch64-apple-darwin",
+]
+
+# Only what actually links into the shipped binary needs a notice.
+ignore-build-dependencies = true
+ignore-dev-dependencies = true
+
+# toy-hover-battle itself is publish = false and covered by LICENSE.
+private = { ignore = true }
+
+accepted = [
+    "Apache-2.0",
+    "MIT",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "MPL-2.0",
+    "Unicode-3.0",
+    "CC0-1.0",
+    "0BSD",
+    "Unlicense",
+    "BSL-1.0",
+]

@@ -1,0 +1,55 @@
+# cargo-deny configuration, run in CI by .github/workflows/ci.yml.
+# Locally: cargo install --locked cargo-deny && cargo deny check
+
+[graph]
+# Only the targets the project actually ships are checked, so a dependency
+# that never links (for example a Windows-only crate on Linux) cannot fail
+# the run.
+targets = [
+    "x86_64-unknown-linux-gnu",
+    "x86_64-pc-windows-msvc",
+    "aarch64-apple-darwin",
+]
+all-features = true
+
+[advisories]
+ignore = [
+    # Soundness issues in macroquad (mutable statics). No fixed version
+    # exists; the whole game is built on macroquad, so this is accepted for
+    # as long as the engine is. Revisit on every macroquad upgrade.
+    "RUSTSEC-2025-0035",
+    # ttf-parser is unmaintained. It arrives through fontdue -> macroquad,
+    # is not selectable from here, and has no safe upgrade.
+    "RUSTSEC-2026-0192",
+]
+# Everything else — including any future advisory against the unmaintained
+# objc 0.2 used by the macOS gamepad bindings — fails the run.
+
+[licenses]
+# Licenses accepted for dependencies. The game's own CC BY-NC-4.0 is not in
+# this list on purpose — see [licenses.private] below.
+allow = [
+    "Apache-2.0",
+    "MIT",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "Unicode-3.0",
+    "0BSD",
+    "Unlicense",
+]
+confidence-threshold = 0.9
+
+[licenses.private]
+# toy-hover-battle is publish = false and licensed under CC BY-NC-4.0.
+ignore = true
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]

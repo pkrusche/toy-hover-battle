@@ -1,0 +1,26 @@
+# Third-party licenses
+
+Toy Hover Battle links the Rust crates listed below. Each crate remains under
+its own license, reproduced in full further down. Toy Hover Battle itself is
+licensed separately — see `LICENSE`.
+
+{{#each overview}}
+- {{{name}}} ({{count}} crate{{#unless (eq count 1)}}s{{/unless}})
+{{/each}}
+
+Some licenses appear more than once: each crate ships its own copy of the
+license text, and every copy is reproduced with the crates it covers.
+
+{{#each licenses}}
+## {{{name}}}
+
+Applies to:
+{{#each used_by}}
+- {{{crate.name}}} {{crate.version}}{{#if crate.repository}} — {{{crate.repository}}}{{/if}}
+{{/each}}
+
+```
+{{{text}}}
+```
+
+{{/each}}

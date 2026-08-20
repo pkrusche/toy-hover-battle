@@ -1,0 +1,143 @@
+name: Release binaries
+
+on:
+  push:
+    tags:
+      # Only release tags trigger a build; other tags are just markers.
+      - "v*"
+
+# Build jobs run third-party actions, so they only ever see a read-scoped
+# token. The publish job below opts into contents: write for itself.
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Release checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Install Linux dependencies
+        run: sudo apt-get update && sudo apt-get install --yes libasound2-dev libudev-dev
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+        with:
+          toolchain: 1.97.1
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@49a0bdc70d2e1b713ca9e2869b211fcce03d3c1c # v2
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --all-targets --all-features -- -D warnings
+      - run: cargo test --all-features
+
+  licenses:
+    name: Third-party license notices
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+        with:
+          toolchain: 1.97.1
+      - uses: Swatinem/rust-cache@49a0bdc70d2e1b713ca9e2869b211fcce03d3c1c # v2
+      - name: Install cargo-about
+        run: cargo install --locked --features cli cargo-about@0.9.2
+      # One pass covers every shipped target, so the notices in the Linux
+      # archive also list the Windows- and macOS-only dependencies.
+      - name: Generate THIRD-PARTY-LICENSES.md
+        run: cargo about generate --locked about.hbs --output-file THIRD-PARTY-LICENSES.md
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: third-party-licenses
+          path: THIRD-PARTY-LICENSES.md
+          if-no-files-found: error
+
+  build:
+    name: Build ${{ matrix.platform }}
+    needs: [checks, licenses]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-x86_64
+            runner: ubuntu-latest
+            archive: toy-hover-battle-linux-x86_64.tar.gz
+          # macOS builds are covered by CI but not released: an unsigned,
+          # unnotarized .app is quarantined on download, so macOS users build
+          # from source (see README "Platform notes").
+          - platform: windows-x86_64
+            runner: windows-latest
+            archive: toy-hover-battle-windows-x86_64.zip
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install --yes libasound2-dev libudev-dev
+
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+        with:
+          toolchain: 1.97.1
+
+      - uses: Swatinem/rust-cache@49a0bdc70d2e1b713ca9e2869b211fcce03d3c1c # v2
+
+      - name: Build release binary
+        run: cargo build --release --locked
+
+      - name: Download third-party license notices
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: third-party-licenses
+
+      # MIT/Apache-2.0 dependencies and the game's own CC BY-NC-4.0 all
+      # require their notices to travel with the binary.
+      - name: Stage archive contents
+        if: runner.os != 'Windows'
+        run: |
+          set -euo pipefail
+          dir="toy-hover-battle-${{ matrix.platform }}"
+          mkdir -p "$dir"
+          cp target/release/toy-hover-battle "$dir/"
+          cp LICENSE README.md THIRD-PARTY-LICENSES.md "$dir/"
+          cp assets/LICENSE.md "$dir/assets-LICENSE.md"
+          tar -czf "${{ matrix.archive }}" "$dir"
+
+      - name: Stage archive contents (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $dir = "toy-hover-battle-${{ matrix.platform }}"
+          New-Item -ItemType Directory -Path $dir | Out-Null
+          Copy-Item target/release/toy-hover-battle.exe $dir
+          Copy-Item LICENSE, README.md, THIRD-PARTY-LICENSES.md $dir
+          Copy-Item assets/LICENSE.md $dir/assets-LICENSE.md
+          Compress-Archive -Path $dir -DestinationPath "${{ matrix.archive }}"
+
+      - name: Upload packaged binary
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-${{ matrix.platform }}
+          path: ${{ matrix.archive }}
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download packaged binaries
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: release-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Create release and upload binaries
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || \
+            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes
+          gh release upload "$GITHUB_REF_NAME" release-assets/* --clobber

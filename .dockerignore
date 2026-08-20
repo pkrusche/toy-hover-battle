@@ -1,0 +1,22 @@
+# Applies to any `docker build` invoked from the repo root. The
+# asset-generation/Dockerfile build uses asset-generation/ as its context
+# instead — see asset-generation/.dockerignore for that one.
+
+target/
+.uv_cache/
+
+asset-generation/sfx/.venv/
+asset-generation/sfx/__pycache__/
+asset-generation/sfx/**/__pycache__/
+asset-generation/frames/
+
+**/.venv/
+**/__pycache__/
+*.py[cod]
+
+.git/
+.jj/
+.devcontainer/
+.project-sandbox/
+.DS_Store
+*.swp
