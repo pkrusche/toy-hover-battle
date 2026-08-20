@@ -1,6 +1,6 @@
 [package]
 name = "toy-hover-battle"
-version = "0.1.4"
+version = "0.1.0"
 edition = "2021"
 description = "Small isometric battle game to explore AI-based engineering."
 license = "CC-BY-NC-4.0"
