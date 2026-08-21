@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/pkrusche/toy-hover-battle/actions/workflows/ci.yml/badge.svg)](https://github.com/pkrusche/toy-hover-battle/actions/workflows/ci.yml)
 
-Small isometric battle game to experiment with AI-based coding. This one / two-player arena game is written in Rust with [Macroquad](https://macroquad.rs/). Pilot a craft through a procedurally generated rock field face a single opponent — human or AI.
+Small isometric battle game that was made for me to experiment with AI-based coding. This one / two-player arena game is written in Rust with [Macroquad](https://macroquad.rs/). Pilot a craft through a procedurally generated rock field face a single opponent — human or AI.
 
 
 > Created with the help of AI.
